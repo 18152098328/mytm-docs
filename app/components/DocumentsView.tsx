@@ -14,6 +14,8 @@ import {
 import { DocumentPreview } from "./DocumentPreview";
 import { Icon } from "./icons";
 
+const badgeClass = (type: DocType) => "doc-badge t-" + docShort[type].toLowerCase();
+
 export function DocumentsView({
   store,
   draft,
@@ -430,7 +432,7 @@ export function DocumentsView({
             <div className="document-history">
               {filteredDocs.map((doc) => (
                 <article key={doc.id} className={draft.id === doc.id ? "editing" : ""}>
-                  <span className="doc-badge">{docShort[doc.type]}</span>
+                  <span className={badgeClass(doc.type)}>{docShort[doc.type]}</span>
                   <div className="doc-info">
                     <b>{doc.number}</b>
                     <small>

@@ -1,6 +1,8 @@
 import type { DocType, Store, TradeDocument } from "../lib/types";
-import { docNames, docShort, docTotal, docTypes, money } from "../lib/data";
+import { docNames, docShort, docTotal, docTypes, money, today } from "../lib/data";
 import { Icon } from "./icons";
+
+const badgeClass = (type: DocType) => "doc-badge t-" + docShort[type].toLowerCase();
 
 export function DashboardView({
   store,
@@ -14,6 +16,8 @@ export function DashboardView({
   onShowDocuments: () => void;
 }) {
   const confirmed = store.documents.filter((x) => x.status === "Confirmed").length;
+  const month = today.slice(0, 7);
+  const thisMonth = store.documents.filter((x) => x.date.startsWith(month)).length;
   return (
     <div className="page dashboard-page">
       <section className="hero-card">
@@ -66,6 +70,16 @@ export function DashboardView({
             <p>{confirmed} 份已确认</p>
           </div>
         </article>
+        <article>
+          <span className="metric-icon violet">
+            <Icon name="convert" size={20} />
+          </span>
+          <div>
+            <small>本月单据</small>
+            <strong>{thisMonth}</strong>
+            <p>{month} 开具</p>
+          </div>
+        </article>
       </section>
 
       <section className="split-grid">
@@ -104,7 +118,7 @@ export function DashboardView({
             <div className="recent-list">
               {store.documents.slice(0, 6).map((doc) => (
                 <button key={doc.id} className="recent-row" onClick={() => onEditDocument(doc)}>
-                  <span className="doc-badge">{docShort[doc.type]}</span>
+                  <span className={badgeClass(doc.type)}>{docShort[doc.type]}</span>
                   <div>
                     <b>{doc.number}</b>
                     <small>{store.customers.find((x) => x.id === doc.customerId)?.company || "客户已删除"}</small>

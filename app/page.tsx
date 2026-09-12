@@ -23,6 +23,7 @@ import {
   today,
   uid,
 } from "./lib/data";
+import { Icon } from "./components/icons";
 import { Sidebar, viewLabels } from "./components/Sidebar";
 import { DashboardView } from "./components/DashboardView";
 import { CustomersView } from "./components/CustomersView";
@@ -37,6 +38,7 @@ export default function Home() {
   const [loaded, setLoaded] = useState(false);
   const [toast, setToast] = useState("");
   const [draft, setDraftState] = useState<Draft>(() => makeDraft("Quotation", []));
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   const setDraft = (updater: (d: Draft) => Draft) => setDraftState(updater);
 
@@ -53,8 +55,22 @@ export default function Home() {
     } catch {
       /* keep starter data */
     }
+    try {
+      if (localStorage.getItem("mytm-docs-theme") === "dark") setTheme("dark");
+    } catch {
+      /* default light */
+    }
     setLoaded(true);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem("mytm-docs-theme", theme);
+    } catch {
+      /* non-persistent */
+    }
+  }, [theme]);
 
   useEffect(() => {
     if (loaded) localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
@@ -236,6 +252,14 @@ export default function Home() {
           </div>
           <div className="top-actions">
             {store.seller.tel && <span className="phone">TEL&nbsp; {store.seller.tel}</span>}
+            <button
+              className="icon-button theme-toggle"
+              onClick={() => setTheme((t) => (t === "light" ? "dark" : "light"))}
+              aria-label={theme === "light" ? "切换到深色模式" : "切换到浅色模式"}
+              title={theme === "light" ? "深色模式" : "浅色模式"}
+            >
+              <Icon name={theme === "light" ? "moon" : "sun"} size={16} />
+            </button>
             <button className="primary" onClick={() => newDocument()}>
               + 新建单据
             </button>

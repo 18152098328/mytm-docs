@@ -97,3 +97,13 @@ test("covers bilingual output, Chinese amount words, and stamp upload", async ()
   assert.match(bundle, /onStampMove/);
   assert.match(bundle, /stampX/);
 });
+
+test("ships the premium UI with light and dark themes", async () => {
+  const bundle = await readAppSources();
+  assert.match(bundle, /\[data-theme="dark"\]/);
+  assert.match(bundle, /mytm-docs-theme/);
+  assert.match(bundle, /theme-toggle/);
+  assert.match(bundle, /color-scheme: dark/);
+  assert.match(bundle, /doc-badge t-/);
+  assert.match(bundle, /本月单据/);
+});
