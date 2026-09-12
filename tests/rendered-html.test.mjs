@@ -90,4 +90,7 @@ test("covers bilingual output, Chinese amount words, and stamp upload", async ()
   assert.match(bundle, /中英双语/);
   assert.match(bundle, /stampImage/);
   assert.match(bundle, /toDataURL/);
+  assert.match(bundle, /paymentTerms/);
+  assert.match(bundle, /PAYMENT TERMS/);
+  assert.match(bundle, /break-inside: avoid/);
 });

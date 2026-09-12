@@ -45,8 +45,9 @@ export const currencies = ["USD", "EUR", "GBP", "CNY", "JPY", "AUD"];
 
 export const incoterms = ["EXW", "FCA", "FOB", "CFR", "CIF", "CPT", "CIP", "DAP", "DDP"];
 
-export const DEFAULT_NOTES =
-  "Validity: 30 days. Payment: 30% deposit, balance before shipment.";
+export const DEFAULT_NOTES = "Validity: 30 days.";
+
+export const DEFAULT_PAYMENT_TERMS = "30% T/T deposit, balance before shipment.";
 
 export const defaultSeller: Seller = {
   company: "MyTM",
@@ -263,6 +264,7 @@ export function makeDraft(type: DocType, documents: TradeDocument[]): Draft {
     customerId: "",
     currency: "USD",
     language: "en",
+    paymentTerms: DEFAULT_PAYMENT_TERMS,
     notes: DEFAULT_NOTES,
     incoterm: "",
     portOfLoading: "",
@@ -281,6 +283,7 @@ export function draftFromDocument(doc: TradeDocument): Draft {
     customerId: doc.customerId,
     currency: doc.currency,
     language: doc.language,
+    paymentTerms: doc.paymentTerms,
     notes: doc.notes,
     incoterm: doc.incoterm,
     portOfLoading: doc.portOfLoading,
@@ -379,6 +382,7 @@ function sanitizeDocument(v: unknown): TradeDocument | null {
     status: r.status === "Confirmed" ? "Confirmed" : "Draft",
     language: r.language === "bilingual" ? "bilingual" : "en",
     items,
+    paymentTerms: str(r.paymentTerms),
     notes: str(r.notes),
     incoterm: str(r.incoterm),
     portOfLoading: str(r.portOfLoading),

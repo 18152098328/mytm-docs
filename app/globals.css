@@ -1874,3 +1874,30 @@ textarea {
   mix-blend-mode: multiply;
   pointer-events: none;
 }
+
+/* ============================================================
+   Print pagination: long item tables flow across pages cleanly
+   ============================================================ */
+@media print {
+  .doc-table {
+    break-inside: auto;
+  }
+  .doc-table thead {
+    display: table-header-group;
+  }
+  .doc-table tfoot {
+    break-inside: avoid;
+  }
+  .doc-table tr,
+  .party,
+  .doc-trade,
+  .doc-total,
+  .doc-words,
+  .doc-bank,
+  .doc-notes,
+  .signature,
+  .document-preview footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

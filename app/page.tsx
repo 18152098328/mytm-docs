@@ -131,6 +131,7 @@ export default function Home() {
       status,
       language: draft.language,
       items: cleanLines,
+      paymentTerms: draft.paymentTerms,
       notes: draft.notes,
       incoterm: draft.incoterm,
       portOfLoading: draft.portOfLoading,

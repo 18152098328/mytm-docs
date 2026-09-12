@@ -77,6 +77,7 @@ export type TradeDocument = {
   status: DocStatus;
   language: DocLanguage;
   items: LineItem[];
+  paymentTerms: string;
   notes: string;
   /* trade terms */
   incoterm: string;
@@ -102,6 +103,7 @@ export type Draft = {
   customerId: string;
   currency: string;
   language: DocLanguage;
+  paymentTerms: string;
   notes: string;
   incoterm: string;
   portOfLoading: string;

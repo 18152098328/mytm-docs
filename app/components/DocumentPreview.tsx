@@ -13,6 +13,7 @@ export function DocumentPreview({
   currency,
   language,
   lines,
+  paymentTerms,
   notes,
   total,
   incoterm,
@@ -28,6 +29,7 @@ export function DocumentPreview({
   currency: string;
   language: DocLanguage;
   lines: LineItem[];
+  paymentTerms: string;
   notes: string;
   total: number;
   incoterm: string;
@@ -233,6 +235,13 @@ export function DocumentPreview({
         <div className="doc-notes">
           <small>{L("SHIPPING MARKS", "唛头")}</small>
           <p>{shippingMarks}</p>
+        </div>
+      )}
+
+      {!isPacking && paymentTerms && (
+        <div className="doc-notes">
+          <small>{L("PAYMENT TERMS", "付款条款")}</small>
+          <p>{paymentTerms}</p>
         </div>
       )}
 

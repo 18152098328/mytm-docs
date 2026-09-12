@@ -333,8 +333,18 @@ export function DocumentsView({
           </button>
 
           <p className="section-label">条款与备注</p>
+          {!isPacking && (
+            <label>
+              付款条款
+              <input
+                value={draft.paymentTerms}
+                onChange={(e) => update("paymentTerms", e.target.value)}
+                placeholder="e.g. 30% T/T deposit, balance against B/L copy"
+              />
+            </label>
+          )}
           <label>
-            条款与备注
+            其他条款与备注
             <textarea value={draft.notes} onChange={(e) => update("notes", e.target.value)} />
           </label>
 
@@ -452,6 +462,7 @@ export function DocumentsView({
         currency={draft.currency}
         language={draft.language}
         lines={draft.lines}
+        paymentTerms={draft.paymentTerms}
         notes={draft.notes}
         total={total}
         incoterm={draft.incoterm}
