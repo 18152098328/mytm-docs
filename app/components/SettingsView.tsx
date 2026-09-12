@@ -111,7 +111,7 @@ export function SettingsView({
           </div>
         </div>
         <p className="section-hint">
-          建议上传透明背景的 PNG 印章图。保存后会盖在每份单据的 Company stamp 签章区上，并随备份导出。
+          建议上传透明背景的 PNG 印章图。保存后会盖在每份单据的 Company stamp 签章区上，可在单据预览中拖动微调位置，并随备份导出。
         </p>
         <div className="stamp-row">
           <div className="stamp-preview">

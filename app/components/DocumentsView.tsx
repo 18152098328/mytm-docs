@@ -23,6 +23,7 @@ export function DocumentsView({
   onEdit,
   onDelete,
   onConvert,
+  onStampMove,
 }: {
   store: Store;
   draft: Draft;
@@ -32,6 +33,7 @@ export function DocumentsView({
   onEdit: (doc: TradeDocument) => void;
   onDelete: (id: string) => void;
   onConvert: (type: DocType) => void;
+  onStampMove: (x: number, y: number) => void;
 }) {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | DocType>("all");
@@ -79,6 +81,7 @@ export function DocumentsView({
               description: product
                 ? product.name + (product.specification ? " · " + product.specification : "")
                 : "",
+              hsCode: product?.hsCode || "",
               unit: product?.unit || "pcs",
               unitPrice: product?.price || 0,
             }
@@ -294,6 +297,7 @@ export function DocumentsView({
               <div className="line-head">
                 <span>商品</span>
                 <span>描述</span>
+                <span>HS Code</span>
                 <span>数量</span>
                 <span>单位</span>
                 <span>单价</span>
@@ -313,6 +317,11 @@ export function DocumentsView({
                     value={line.description}
                     onChange={(e) => updateLine(line.id, "description", e.target.value)}
                     placeholder="Description"
+                  />
+                  <input
+                    value={line.hsCode}
+                    onChange={(e) => updateLine(line.id, "hsCode", e.target.value)}
+                    placeholder="HS"
                   />
                   {numberField(line, "quantity", "1")}
                   <input value={line.unit} onChange={(e) => updateLine(line.id, "unit", e.target.value)} />
@@ -469,6 +478,7 @@ export function DocumentsView({
         portOfLoading={draft.portOfLoading}
         portOfDestination={draft.portOfDestination}
         shippingMarks={draft.shippingMarks}
+        onStampMove={onStampMove}
       />
     </div>
   );

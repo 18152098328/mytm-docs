@@ -93,4 +93,7 @@ test("covers bilingual output, Chinese amount words, and stamp upload", async ()
   assert.match(bundle, /paymentTerms/);
   assert.match(bundle, /PAYMENT TERMS/);
   assert.match(bundle, /break-inside: avoid/);
+  assert.match(bundle, /HS CODE/);
+  assert.match(bundle, /onStampMove/);
+  assert.match(bundle, /stampX/);
 });

@@ -31,6 +31,9 @@ export type Seller = {
   bankAddress: string;
   /** Company stamp image as a data URL, shown over the signature area. */
   stampImage: string;
+  /** Stamp offset in px from its default spot, set by dragging it on the preview. */
+  stampX: number;
+  stampY: number;
 };
 
 export type Customer = {
@@ -57,6 +60,7 @@ export type LineItem = {
   id: string;
   productId: string;
   description: string;
+  hsCode: string;
   quantity: number;
   unit: string;
   unitPrice: number;

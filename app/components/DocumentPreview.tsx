@@ -1,5 +1,8 @@
+import { PointerEvent, useRef, useState } from "react";
 import type { Customer, DocLanguage, DocType, LineItem, Seller } from "../lib/types";
 import { amountInWords, amountInWordsCn, docNames, money, packTotals } from "../lib/data";
+
+const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
 const fmt = (n: number, digits = 2) =>
   new Intl.NumberFormat("en-US", { minimumFractionDigits: 0, maximumFractionDigits: digits }).format(n || 0);
@@ -20,6 +23,7 @@ export function DocumentPreview({
   portOfLoading,
   portOfDestination,
   shippingMarks,
+  onStampMove,
 }: {
   type: DocType;
   number: string;
@@ -36,6 +40,8 @@ export function DocumentPreview({
   portOfLoading: string;
   portOfDestination: string;
   shippingMarks: string;
+  /** When provided, the stamp can be dragged on the preview; called with the final offset. */
+  onStampMove?: (x: number, y: number) => void;
 }) {
   const filled = lines.filter((x) => x.description.trim());
   const isPacking = type === "Packing List";
@@ -43,8 +49,38 @@ export function DocumentPreview({
   const hasTrade = incoterm || portOfLoading || portOfDestination;
   const hasBank = !isPacking && (seller.bankName || seller.bankAccount);
   const cn = language === "bilingual";
+  const showHs = !isPacking && filled.some((x) => x.hsCode.trim());
   /** Bilingual label: "EN 中文" when bilingual output is on. */
   const L = (en: string, zh: string) => (cn ? en + " " + zh : en);
+
+  /* ---- draggable stamp ---- */
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
+  const dragRef = useRef<{ px: number; py: number; bx: number; by: number } | null>(null);
+  const stampX = dragOffset ? dragOffset.x : seller.stampX;
+  const stampY = dragOffset ? dragOffset.y : seller.stampY;
+
+  function stampDown(e: PointerEvent<HTMLImageElement>) {
+    if (!onStampMove) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current = { px: e.clientX, py: e.clientY, bx: seller.stampX, by: seller.stampY };
+  }
+
+  function stampMove(e: PointerEvent<HTMLImageElement>) {
+    const d = dragRef.current;
+    if (!d) return;
+    setDragOffset({
+      x: clamp(d.bx + e.clientX - d.px, -260, 260),
+      y: clamp(d.by + e.clientY - d.py, -220, 80),
+    });
+  }
+
+  function stampUp() {
+    if (!dragRef.current) return;
+    dragRef.current = null;
+    if (dragOffset && onStampMove) onStampMove(dragOffset.x, dragOffset.y);
+    setDragOffset(null);
+  }
 
   return (
     <section className="document-preview" id="print-document">
@@ -189,6 +225,7 @@ export function DocumentPreview({
               <tr>
                 <th>#</th>
                 <th>{L("DESCRIPTION", "品名描述")}</th>
+                {showHs && <th>{L("HS CODE", "海关编码")}</th>}
                 <th>{L("QTY", "数量")}</th>
                 <th>{L("UNIT", "单位")}</th>
                 <th>{L("UNIT PRICE", "单价")}</th>
@@ -200,6 +237,7 @@ export function DocumentPreview({
                 <tr key={line.id}>
                   <td>{index + 1}</td>
                   <td>{line.description}</td>
+                  {showHs && <td className="hs-cell">{line.hsCode}</td>}
                   <td>{fmt(line.quantity, 0)}</td>
                   <td>{line.unit}</td>
                   <td>{money(line.unitPrice, currency)}</td>
@@ -208,7 +246,7 @@ export function DocumentPreview({
               ))}
               {!filled.length && (
                 <tr>
-                  <td colSpan={6} className="preview-placeholder">
+                  <td colSpan={showHs ? 7 : 6} className="preview-placeholder">
                     添加商品后在此预览
                   </td>
                 </tr>
@@ -265,7 +303,19 @@ export function DocumentPreview({
       <div className="signature">
         <span>{L("Authorized signature", "授权签字")}</span>
         <span className="stamp-spot">
-          {seller.stampImage && <img className="stamp" src={seller.stampImage} alt="" />}
+          {seller.stampImage && (
+            <img
+              className={"stamp" + (onStampMove ? " draggable" : "")}
+              src={seller.stampImage}
+              alt=""
+              style={{ transform: "translate(calc(-50% + " + stampX + "px), " + stampY + "px) rotate(-8deg)" }}
+              title={onStampMove ? "拖动调整印章位置" : undefined}
+              onPointerDown={stampDown}
+              onPointerMove={stampMove}
+              onPointerUp={stampUp}
+              onPointerCancel={stampUp}
+            />
+          )}
           {L("Company stamp", "公司盖章")}
         </span>
       </div>

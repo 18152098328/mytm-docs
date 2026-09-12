@@ -911,8 +911,8 @@ textarea {
 .line-head,
 .line-row {
   display: grid;
-  grid-template-columns: 1.1fr 1.5fr 62px 56px 84px 34px;
-  gap: 6px;
+  grid-template-columns: 1fr 1.3fr 64px 52px 46px 76px 30px;
+  gap: 5px;
   align-items: center;
   padding: 7px 8px;
 }
@@ -1873,6 +1873,18 @@ textarea {
   opacity: 0.92;
   mix-blend-mode: multiply;
   pointer-events: none;
+}
+
+.signature .stamp.draggable {
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.signature .stamp.draggable:active {
+  cursor: grabbing;
 }
 
 /* ============================================================

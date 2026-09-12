@@ -60,6 +60,8 @@ export const defaultSeller: Seller = {
   bankSwift: "",
   bankAddress: "",
   stampImage: "",
+  stampX: 0,
+  stampY: 0,
 };
 
 export const starter: Store = {
@@ -84,6 +86,7 @@ export function blankLine(): LineItem {
     id: uid(),
     productId: "",
     description: "",
+    hsCode: "",
     quantity: 1,
     unit: "pcs",
     unitPrice: 0,
@@ -310,6 +313,8 @@ function sanitizeSeller(v: unknown): Seller {
     bankSwift: str(r.bankSwift),
     bankAddress: str(r.bankAddress),
     stampImage: str(r.stampImage),
+    stampX: num(r.stampX),
+    stampY: num(r.stampY),
   };
 }
 
@@ -354,6 +359,7 @@ function sanitizeLine(v: unknown): LineItem | null {
     id: str(r.id) || uid(),
     productId: str(r.productId),
     description,
+    hsCode: str(r.hsCode),
     quantity: num(r.quantity),
     unit: str(r.unit) || "pcs",
     unitPrice: num(r.unitPrice),

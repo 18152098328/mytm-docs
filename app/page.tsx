@@ -73,6 +73,12 @@ export default function Home() {
     setToast("公司信息已保存");
   }
 
+  /** Persist the stamp position after it is dragged on the preview. */
+  function moveStamp(x: number, y: number) {
+    setStore((s) => ({ ...s, seller: { ...s.seller, stampX: x, stampY: y } }));
+    setToast("印章位置已保存");
+  }
+
   /* ---------- customers ---------- */
 
   function saveCustomer(item: Customer) {
@@ -263,6 +269,7 @@ export default function Home() {
             onEdit={editDocument}
             onDelete={deleteDocument}
             onConvert={convertDocument}
+            onStampMove={moveStamp}
           />
         )}
 
