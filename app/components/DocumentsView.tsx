@@ -174,17 +174,29 @@ export function DocumentsView({
               </select>
             </label>
           </div>
-          <label>
-            客户
-            <select value={draft.customerId} onChange={(e) => update("customerId", e.target.value)}>
-              <option value="">请选择客户</option>
-              {store.customers.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.company}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="field-row customer-row">
+            <label>
+              客户
+              <select value={draft.customerId} onChange={(e) => update("customerId", e.target.value)}>
+                <option value="">请选择客户</option>
+                {store.customers.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.company}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              单据语言
+              <select
+                value={draft.language}
+                onChange={(e) => update("language", e.target.value as Draft["language"])}
+              >
+                <option value="en">英文</option>
+                <option value="bilingual">中英双语</option>
+              </select>
+            </label>
+          </div>
 
           <p className="section-label">贸易条款</p>
           <div className="field-row three">
@@ -438,6 +450,7 @@ export function DocumentsView({
         seller={store.seller}
         customer={customer}
         currency={draft.currency}
+        language={draft.language}
         lines={draft.lines}
         notes={draft.notes}
         total={total}

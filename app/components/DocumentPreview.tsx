@@ -1,5 +1,5 @@
-import type { Customer, DocType, LineItem, Seller } from "../lib/types";
-import { amountInWords, money, packTotals } from "../lib/data";
+import type { Customer, DocLanguage, DocType, LineItem, Seller } from "../lib/types";
+import { amountInWords, amountInWordsCn, docNames, money, packTotals } from "../lib/data";
 
 const fmt = (n: number, digits = 2) =>
   new Intl.NumberFormat("en-US", { minimumFractionDigits: 0, maximumFractionDigits: digits }).format(n || 0);
@@ -11,6 +11,7 @@ export function DocumentPreview({
   seller,
   customer,
   currency,
+  language,
   lines,
   notes,
   total,
@@ -25,6 +26,7 @@ export function DocumentPreview({
   seller: Seller;
   customer?: Customer;
   currency: string;
+  language: DocLanguage;
   lines: LineItem[];
   notes: string;
   total: number;
@@ -38,6 +40,9 @@ export function DocumentPreview({
   const totals = packTotals(filled);
   const hasTrade = incoterm || portOfLoading || portOfDestination;
   const hasBank = !isPacking && (seller.bankName || seller.bankAccount);
+  const cn = language === "bilingual";
+  /** Bilingual label: "EN 中文" when bilingual output is on. */
+  const L = (en: string, zh: string) => (cn ? en + " " + zh : en);
 
   return (
     <section className="document-preview" id="print-document">
@@ -57,19 +62,22 @@ export function DocumentPreview({
       </header>
 
       <div className="doc-title">
-        <h2>{type.toUpperCase()}</h2>
+        <div>
+          <h2>{type.toUpperCase()}</h2>
+          {cn && <p className="doc-title-cn">{docNames[type]}</p>}
+        </div>
         <div className="doc-meta">
           <div>
-            <small>DOCUMENT NO.</small>
+            <small>{L("DOCUMENT NO.", "单据号")}</small>
             <b>{number}</b>
           </div>
           <div>
-            <small>ISSUE DATE</small>
+            <small>{L("ISSUE DATE", "日期")}</small>
             <b>{date}</b>
           </div>
           {!isPacking && (
             <div>
-              <small>CURRENCY</small>
+              <small>{L("CURRENCY", "币种")}</small>
               <b>{currency}</b>
             </div>
           )}
@@ -78,7 +86,7 @@ export function DocumentPreview({
 
       <div className="party">
         <div>
-          <small>ISSUED BY</small>
+          <small>{L("ISSUED BY", "卖方")}</small>
           <b>{seller.company}</b>
           <p>
             {seller.address}
@@ -89,7 +97,7 @@ export function DocumentPreview({
           </p>
         </div>
         <div>
-          <small>ISSUED TO</small>
+          <small>{L("ISSUED TO", "买方")}</small>
           <b>{customer?.company || "（请选择客户）"}</b>
           <p>
             {customer?.contact}
@@ -105,19 +113,19 @@ export function DocumentPreview({
         <div className="doc-trade">
           {incoterm && (
             <div>
-              <small>TRADE TERMS</small>
+              <small>{L("TRADE TERMS", "贸易术语")}</small>
               <b>{incoterm}</b>
             </div>
           )}
           {portOfLoading && (
             <div>
-              <small>PORT OF LOADING</small>
+              <small>{L("PORT OF LOADING", "起运港")}</small>
               <b>{portOfLoading}</b>
             </div>
           )}
           {portOfDestination && (
             <div>
-              <small>PORT OF DESTINATION</small>
+              <small>{L("PORT OF DESTINATION", "目的港")}</small>
               <b>{portOfDestination}</b>
             </div>
           )}
@@ -129,12 +137,12 @@ export function DocumentPreview({
           <thead>
             <tr>
               <th>#</th>
-              <th>DESCRIPTION</th>
-              <th>QTY</th>
-              <th>CTNS</th>
-              <th>N.W. (KG)</th>
-              <th>G.W. (KG)</th>
-              <th>MEAS. (CBM)</th>
+              <th>{L("DESCRIPTION", "品名")}</th>
+              <th>{L("QTY", "数量")}</th>
+              <th>{L("CTNS", "箱数")}</th>
+              <th>{L("N.W. (KG)", "净重")}</th>
+              <th>{L("G.W. (KG)", "毛重")}</th>
+              <th>{L("MEAS. (CBM)", "体积")}</th>
             </tr>
           </thead>
           <tbody>
@@ -162,7 +170,7 @@ export function DocumentPreview({
           {filled.length > 0 && (
             <tfoot>
               <tr>
-                <td colSpan={2}>TOTAL</td>
+                <td colSpan={2}>{L("TOTAL", "合计")}</td>
                 <td>{fmt(totals.quantity, 0)}</td>
                 <td>{fmt(totals.cartons, 0)}</td>
                 <td>{fmt(totals.netWeight)}</td>
@@ -178,11 +186,11 @@ export function DocumentPreview({
             <thead>
               <tr>
                 <th>#</th>
-                <th>DESCRIPTION</th>
-                <th>QTY</th>
-                <th>UNIT</th>
-                <th>UNIT PRICE</th>
-                <th>AMOUNT</th>
+                <th>{L("DESCRIPTION", "品名描述")}</th>
+                <th>{L("QTY", "数量")}</th>
+                <th>{L("UNIT", "单位")}</th>
+                <th>{L("UNIT PRICE", "单价")}</th>
+                <th>{L("AMOUNT", "金额")}</th>
               </tr>
             </thead>
             <tbody>
@@ -206,23 +214,31 @@ export function DocumentPreview({
             </tbody>
           </table>
           <div className="doc-total">
-            <span>GRAND TOTAL{incoterm ? " (" + incoterm + ")" : ""}</span>
+            <span>
+              {L("GRAND TOTAL", "总计")}
+              {incoterm ? " (" + incoterm + ")" : ""}
+            </span>
             <b>{money(total, currency)}</b>
           </div>
-          {filled.length > 0 && <p className="doc-words">{amountInWords(total, currency)}</p>}
+          {filled.length > 0 && (
+            <>
+              <p className="doc-words">{amountInWords(total, currency)}</p>
+              {cn && <p className="doc-words">{amountInWordsCn(total, currency)}</p>}
+            </>
+          )}
         </>
       )}
 
       {isPacking && shippingMarks && (
         <div className="doc-notes">
-          <small>SHIPPING MARKS</small>
+          <small>{L("SHIPPING MARKS", "唛头")}</small>
           <p>{shippingMarks}</p>
         </div>
       )}
 
       {hasBank && (
         <div className="doc-bank">
-          <small>BANK DETAILS</small>
+          <small>{L("BANK DETAILS", "银行信息")}</small>
           <p>
             {seller.bankName && <>Bank: {seller.bankName}<br /></>}
             {seller.bankAccount && <>Account No.: {seller.bankAccount}<br /></>}
@@ -233,13 +249,16 @@ export function DocumentPreview({
       )}
 
       <div className="doc-notes">
-        <small>TERMS &amp; NOTES</small>
+        <small>{L("TERMS & NOTES", "条款与备注")}</small>
         <p>{notes || "—"}</p>
       </div>
 
       <div className="signature">
-        <span>Authorized signature</span>
-        <span>Company stamp</span>
+        <span>{L("Authorized signature", "授权签字")}</span>
+        <span className="stamp-spot">
+          {seller.stampImage && <img className="stamp" src={seller.stampImage} alt="" />}
+          {L("Company stamp", "公司盖章")}
+        </span>
       </div>
 
       <footer>

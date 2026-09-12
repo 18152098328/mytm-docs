@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 import type { Seller } from "../lib/types";
 
 export function SettingsView({
@@ -17,6 +17,28 @@ export function SettingsView({
     event.preventDefault();
     if (!form.company.trim()) return;
     onSave({ ...form, company: form.company.trim() });
+  }
+
+  /** Read the stamp image, downscale it to max 320px, store as PNG data URL. */
+  function loadStamp(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 320;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setForm((f) => ({ ...f, stampImage: canvas.toDataURL("image/png") }));
+      };
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
   }
 
   return (
@@ -81,6 +103,37 @@ export function SettingsView({
           银行地址
           <textarea value={form.bankAddress} onChange={(e) => set("bankAddress", e.target.value)} />
         </label>
+
+        <div className="panel-head inner">
+          <div>
+            <p className="eyebrow">COMPANY STAMP</p>
+            <h3>公司印章</h3>
+          </div>
+        </div>
+        <p className="section-hint">
+          建议上传透明背景的 PNG 印章图。保存后会盖在每份单据的 Company stamp 签章区上，并随备份导出。
+        </p>
+        <div className="stamp-row">
+          <div className="stamp-preview">
+            {form.stampImage ? <img src={form.stampImage} alt="公司印章" /> : <span>暂无印章</span>}
+          </div>
+          <div className="stamp-actions">
+            <label className="secondary file-button">
+              上传印章图片
+              <input type="file" accept="image/*" onChange={loadStamp} />
+            </label>
+            {form.stampImage && (
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => setForm((f) => ({ ...f, stampImage: "" }))}
+              >
+                移除印章
+              </button>
+            )}
+          </div>
+        </div>
+
         <button className="primary wide">保存公司信息</button>
       </form>
 
@@ -122,6 +175,7 @@ export function SettingsView({
           <p>提示</p>
           <ul>
             <li>贸易术语、起运港、目的港与唛头在单据编辑器中按单填写。</li>
+            <li>单据语言（纯英文 / 中英双语）在单据编辑器中按单选择。</li>
             <li>金额大写（SAY TOTAL …）会根据单据金额与币种自动生成。</li>
             <li>公司信息随备份一起导出与恢复。</li>
           </ul>

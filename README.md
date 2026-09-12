@@ -4,11 +4,15 @@ MyTM Docs is an original, local-first workspace for foreign-trade customer recor
 
 ## Features
 
-- Customer and product master data
+- Customer and product master data with search, edit and delete
 - Quotation, Proforma Invoice, Sales Contract, Commercial Invoice and Packing List
+- Editable seller profile: company identity, bank details and stamp image
+- Trade terms per document: incoterm, ports, shipping marks
+- Packing List with cartons, net/gross weight and volume totals
+- English or bilingual (EN/CN) output with amount-in-words in both languages
+- Document flow: convert any saved document into another type
 - Reusable product lines and automatic totals
-- Browser-local storage
-- JSON backup and restore
+- Browser-local storage, JSON backup and restore
 - Print / Save as PDF
 - Responsive desktop and mobile layout
 

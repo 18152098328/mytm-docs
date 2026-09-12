@@ -15,6 +15,9 @@ export type DocType =
 
 export type DocStatus = "Draft" | "Confirmed";
 
+/** Document output language: English only, or bilingual English + Chinese. */
+export type DocLanguage = "en" | "bilingual";
+
 /** Seller identity and bank details, editable on the settings page. */
 export type Seller = {
   company: string;
@@ -26,6 +29,8 @@ export type Seller = {
   bankAccount: string;
   bankSwift: string;
   bankAddress: string;
+  /** Company stamp image as a data URL, shown over the signature area. */
+  stampImage: string;
 };
 
 export type Customer = {
@@ -70,6 +75,7 @@ export type TradeDocument = {
   customerId: string;
   currency: string;
   status: DocStatus;
+  language: DocLanguage;
   items: LineItem[];
   notes: string;
   /* trade terms */
@@ -95,6 +101,7 @@ export type Draft = {
   date: string;
   customerId: string;
   currency: string;
+  language: DocLanguage;
   notes: string;
   incoterm: string;
   portOfLoading: string;

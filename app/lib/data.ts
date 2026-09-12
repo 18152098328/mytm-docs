@@ -58,6 +58,7 @@ export const defaultSeller: Seller = {
   bankAccount: "",
   bankSwift: "",
   bankAddress: "",
+  stampImage: "",
 };
 
 export const starter: Store = {
@@ -159,6 +160,79 @@ const currencyWords: Record<string, [string, string]> = {
   AUD: ["AUSTRALIAN DOLLARS", "CENTS"],
 };
 
+const CN_DIGITS = ["零", "壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖"];
+const CN_SMALL = ["", "拾", "佰", "仟"];
+const CN_BIG = ["", "万", "亿", "万亿"];
+
+function cnFourDigits(n: number): string {
+  let s = "";
+  let pendingZero = false;
+  for (let i = 3; i >= 0; i--) {
+    const d = Math.floor(n / 10 ** i) % 10;
+    if (d === 0) {
+      if (s) pendingZero = true;
+    } else {
+      if (pendingZero) {
+        s += "零";
+        pendingZero = false;
+      }
+      s += CN_DIGITS[d] + CN_SMALL[i];
+    }
+  }
+  return s;
+}
+
+function cnInteger(n: number): string {
+  if (n === 0) return "零";
+  const groups: number[] = [];
+  let rest = n;
+  while (rest > 0) {
+    groups.unshift(rest % 10000);
+    rest = Math.floor(rest / 10000);
+  }
+  let s = "";
+  let lastWasZero = false;
+  groups.forEach((g, idx) => {
+    const scale = CN_BIG[groups.length - 1 - idx];
+    if (g === 0) {
+      lastWasZero = s !== "";
+      return;
+    }
+    if (s && (g < 1000 || lastWasZero)) s += "零";
+    s += cnFourDigits(g) + scale;
+    lastWasZero = false;
+  });
+  return s;
+}
+
+const currencyCn: Record<string, string> = {
+  USD: "美元",
+  EUR: "欧元",
+  GBP: "英镑",
+  CNY: "人民币",
+  JPY: "日元",
+  AUD: "澳元",
+};
+
+/** 中文金额大写，如 “美元玖仟肆佰元整”。 */
+export function amountInWordsCn(value: number, currency: string) {
+  const unit = currencyCn[currency] ?? currency;
+  const noMinor = currency === "JPY";
+  const safe = Math.max(0, Number(value) || 0);
+  const whole = noMinor ? Math.round(safe) : Math.floor(safe + 1e-9);
+  const cents = noMinor ? 0 : Math.round((safe - whole) * 100);
+  const jiao = Math.floor(cents / 10);
+  const fen = cents % 10;
+  let s = unit + cnInteger(whole) + "元";
+  if (cents === 0) {
+    s += "整";
+  } else {
+    if (jiao > 0) s += CN_DIGITS[jiao] + "角";
+    if (fen > 0) s += (jiao === 0 ? "零" : "") + CN_DIGITS[fen] + "分";
+  }
+  return "金额大写：" + s;
+}
+
 /** "SAY TOTAL US DOLLARS NINE THOUSAND FOUR HUNDRED ONLY." */
 export function amountInWords(value: number, currency: string) {
   const [unit, cent] = currencyWords[currency] ?? [currency, "CENTS"];
@@ -188,6 +262,7 @@ export function makeDraft(type: DocType, documents: TradeDocument[]): Draft {
     date: today,
     customerId: "",
     currency: "USD",
+    language: "en",
     notes: DEFAULT_NOTES,
     incoterm: "",
     portOfLoading: "",
@@ -205,6 +280,7 @@ export function draftFromDocument(doc: TradeDocument): Draft {
     date: doc.date,
     customerId: doc.customerId,
     currency: doc.currency,
+    language: doc.language,
     notes: doc.notes,
     incoterm: doc.incoterm,
     portOfLoading: doc.portOfLoading,
@@ -230,6 +306,7 @@ function sanitizeSeller(v: unknown): Seller {
     bankAccount: str(r.bankAccount),
     bankSwift: str(r.bankSwift),
     bankAddress: str(r.bankAddress),
+    stampImage: str(r.stampImage),
   };
 }
 
@@ -300,6 +377,7 @@ function sanitizeDocument(v: unknown): TradeDocument | null {
     customerId: str(r.customerId),
     currency: str(r.currency) || "USD",
     status: r.status === "Confirmed" ? "Confirmed" : "Draft",
+    language: r.language === "bilingual" ? "bilingual" : "en",
     items,
     notes: str(r.notes),
     incoterm: str(r.incoterm),

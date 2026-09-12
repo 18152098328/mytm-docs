@@ -129,6 +129,7 @@ export default function Home() {
       customerId: draft.customerId,
       currency: draft.currency,
       status,
+      language: draft.language,
       items: cleanLines,
       notes: draft.notes,
       incoterm: draft.incoterm,

@@ -81,3 +81,13 @@ test("covers seller settings, trade terms, packing data, search and conversion",
   assert.match(bundle, /search-box/);
   assert.match(bundle, /onConvert/);
 });
+
+test("covers bilingual output, Chinese amount words, and stamp upload", async () => {
+  const bundle = await readAppSources();
+  assert.match(bundle, /amountInWordsCn/);
+  assert.match(bundle, /金额大写/);
+  assert.match(bundle, /bilingual/);
+  assert.match(bundle, /中英双语/);
+  assert.match(bundle, /stampImage/);
+  assert.match(bundle, /toDataURL/);
+});
