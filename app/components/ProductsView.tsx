@@ -23,6 +23,18 @@ export function ProductsView({
 }) {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? products.filter(
+        (x) =>
+          x.sku.toLowerCase().includes(q) ||
+          x.name.toLowerCase().includes(q) ||
+          x.specification.toLowerCase().includes(q) ||
+          x.hsCode.toLowerCase().includes(q),
+      )
+    : products;
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -101,11 +113,15 @@ export function ProductsView({
       <section className="panel list-panel">
         <div className="panel-head">
           <div>
-            <p className="eyebrow">{products.length} RECORDS</p>
+            <p className="eyebrow">{filtered.length} / {products.length} RECORDS</p>
             <h3>商品列表</h3>
           </div>
+          <div className="search-box">
+            <Icon name="search" size={15} />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="搜索 SKU / 名称 / 规格" />
+          </div>
         </div>
-        {products.length ? (
+        {filtered.length ? (
           <div className="product-table">
             <div className="table-head">
               <span>SKU / 商品</span>
@@ -113,7 +129,7 @@ export function ProductsView({
               <span>价格</span>
               <span />
             </div>
-            {products.map((item) => (
+            {filtered.map((item) => (
               <div className={"table-row" + (editingId === item.id ? " editing" : "")} key={item.id}>
                 <span>
                   <b>{item.sku || "NO SKU"}</b>
@@ -137,7 +153,7 @@ export function ProductsView({
           </div>
         ) : (
           <div className="empty-state compact">
-            <p>暂无商品，请先在左侧新建。</p>
+            <p>{products.length ? "没有匹配的商品" : "暂无商品，请先在左侧新建。"}</p>
           </div>
         )}
       </section>

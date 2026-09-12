@@ -7,6 +7,7 @@ import type {
   DocType,
   Draft,
   Product,
+  Seller,
   Store,
   TradeDocument,
   View,
@@ -27,6 +28,7 @@ import { DashboardView } from "./components/DashboardView";
 import { CustomersView } from "./components/CustomersView";
 import { ProductsView } from "./components/ProductsView";
 import { DocumentsView } from "./components/DocumentsView";
+import { SettingsView } from "./components/SettingsView";
 import { BackupView } from "./components/BackupView";
 
 export default function Home() {
@@ -63,6 +65,13 @@ export default function Home() {
     const timer = setTimeout(() => setToast(""), 2400);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  /* ---------- seller ---------- */
+
+  function saveSeller(seller: Seller) {
+    setStore((s) => ({ ...s, seller }));
+    setToast("公司信息已保存");
+  }
 
   /* ---------- customers ---------- */
 
@@ -122,6 +131,10 @@ export default function Home() {
       status,
       items: cleanLines,
       notes: draft.notes,
+      incoterm: draft.incoterm,
+      portOfLoading: draft.portOfLoading,
+      portOfDestination: draft.portOfDestination,
+      shippingMarks: draft.shippingMarks,
       createdAt: existing?.createdAt ?? new Date().toISOString(),
     };
     setStore((s) => ({
@@ -134,10 +147,19 @@ export default function Home() {
     setToast(existing ? "单据已更新" : status === "Confirmed" ? "单据已确认" : "草稿已保存");
   }
 
+  /** Unsaved composer content that would be lost by starting over. */
+  function hasUnsavedWork() {
+    return !draft.id && draft.lines.some((x) => x.description.trim());
+  }
+
   function newDocument(type?: DocType) {
+    if (hasUnsavedWork() && !window.confirm("当前编辑器中有未保存的单据内容，确定放弃并新建？")) {
+      setView("documents");
+      return;
+    }
     setDraftState((d) => makeDraft(type ?? d.type, store.documents));
     setView("documents");
-    if (type) setToast("已切换到" + docNames[type]);
+    if (type) setToast("已新建" + docNames[type] + "草稿");
   }
 
   function editDocument(doc: TradeDocument) {
@@ -149,6 +171,18 @@ export default function Home() {
     setStore((s) => ({ ...s, documents: s.documents.filter((x) => x.id !== id) }));
     setDraftState((d) => (d.id === id ? { ...d, id: null } : d));
     setToast("单据已删除");
+  }
+
+  /** Convert the currently open saved document into a new draft of another type. */
+  function convertDocument(type: DocType) {
+    setDraftState((d) => ({
+      ...d,
+      id: null,
+      type,
+      number: makeNumber(type, store.documents),
+      date: today,
+    }));
+    setToast("已由原单据生成" + docNames[type] + "新草稿，请检查后保存");
   }
 
   /* ---------- backup ---------- */
@@ -170,12 +204,13 @@ export default function Home() {
     const reader = new FileReader();
     reader.onload = () => {
       const data = parseBackup(String(reader.result));
-      if (data) {
-        setStore(data);
-        setToast("备份已恢复");
-      } else {
+      if (!data) {
         setToast("备份文件无法识别");
+        return;
       }
+      if (!window.confirm("恢复备份将覆盖当前全部数据，确定继续？")) return;
+      setStore(data);
+      setToast("备份已恢复");
     };
     reader.readAsText(file);
     event.target.value = "";
@@ -192,7 +227,7 @@ export default function Home() {
             <h1>{viewLabels[view]}</h1>
           </div>
           <div className="top-actions">
-            <span className="phone">TEL&nbsp; 18152098328</span>
+            {store.seller.tel && <span className="phone">TEL&nbsp; {store.seller.tel}</span>}
             <button className="primary" onClick={() => newDocument()}>
               + 新建单据
             </button>
@@ -225,8 +260,11 @@ export default function Home() {
             onNew={() => newDocument()}
             onEdit={editDocument}
             onDelete={deleteDocument}
+            onConvert={convertDocument}
           />
         )}
+
+        {view === "settings" && <SettingsView seller={store.seller} onSave={saveSeller} />}
 
         {view === "backup" && <BackupView onExport={exportBackup} onImport={importBackup} />}
       </section>

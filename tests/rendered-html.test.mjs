@@ -67,3 +67,17 @@ test("supports editing and deleting every record type", async () => {
   assert.match(bundle, /startEdit/);
   assert.match(bundle, /draftFromDocument/);
 });
+
+test("covers seller settings, trade terms, packing data, search and conversion", async () => {
+  const bundle = await readAppSources();
+  assert.match(bundle, /function SettingsView/);
+  assert.match(bundle, /bankName/);
+  assert.match(bundle, /incoterm/);
+  assert.match(bundle, /portOfLoading/);
+  assert.match(bundle, /shippingMarks/);
+  assert.match(bundle, /grossWeight/);
+  assert.match(bundle, /amountInWords/);
+  assert.match(bundle, /SAY TOTAL/);
+  assert.match(bundle, /search-box/);
+  assert.match(bundle, /onConvert/);
+});

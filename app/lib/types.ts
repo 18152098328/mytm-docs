@@ -1,4 +1,10 @@
-export type View = "dashboard" | "customers" | "products" | "documents" | "backup";
+export type View =
+  | "dashboard"
+  | "customers"
+  | "products"
+  | "documents"
+  | "settings"
+  | "backup";
 
 export type DocType =
   | "Quotation"
@@ -8,6 +14,19 @@ export type DocType =
   | "Packing List";
 
 export type DocStatus = "Draft" | "Confirmed";
+
+/** Seller identity and bank details, editable on the settings page. */
+export type Seller = {
+  company: string;
+  address: string;
+  tel: string;
+  email: string;
+  taxId: string;
+  bankName: string;
+  bankAccount: string;
+  bankSwift: string;
+  bankAddress: string;
+};
 
 export type Customer = {
   id: string;
@@ -36,6 +55,11 @@ export type LineItem = {
   quantity: number;
   unit: string;
   unitPrice: number;
+  /* packing data, used by the Packing List */
+  cartons: number;
+  netWeight: number;
+  grossWeight: number;
+  volume: number;
 };
 
 export type TradeDocument = {
@@ -48,10 +72,16 @@ export type TradeDocument = {
   status: DocStatus;
   items: LineItem[];
   notes: string;
+  /* trade terms */
+  incoterm: string;
+  portOfLoading: string;
+  portOfDestination: string;
+  shippingMarks: string;
   createdAt: string;
 };
 
 export type Store = {
+  seller: Seller;
   customers: Customer[];
   products: Product[];
   documents: TradeDocument[];
@@ -66,5 +96,9 @@ export type Draft = {
   customerId: string;
   currency: string;
   notes: string;
+  incoterm: string;
+  portOfLoading: string;
+  portOfDestination: string;
+  shippingMarks: string;
   lines: LineItem[];
 };

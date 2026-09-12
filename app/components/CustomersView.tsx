@@ -23,6 +23,18 @@ export function CustomersView({
 }) {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? customers.filter(
+        (x) =>
+          x.company.toLowerCase().includes(q) ||
+          x.contact.toLowerCase().includes(q) ||
+          x.country.toLowerCase().includes(q) ||
+          x.email.toLowerCase().includes(q),
+      )
+    : customers;
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -101,13 +113,17 @@ export function CustomersView({
       <section className="panel list-panel">
         <div className="panel-head">
           <div>
-            <p className="eyebrow">{customers.length} RECORDS</p>
+            <p className="eyebrow">{filtered.length} / {customers.length} RECORDS</p>
             <h3>客户列表</h3>
           </div>
+          <div className="search-box">
+            <Icon name="search" size={15} />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="搜索公司 / 联系人 / 国家" />
+          </div>
         </div>
-        {customers.length ? (
+        {filtered.length ? (
           <div className="card-list">
-            {customers.map((item) => (
+            {filtered.map((item) => (
               <article key={item.id} className={editingId === item.id ? "editing" : ""}>
                 <span className="avatar">{item.company.slice(0, 2).toUpperCase()}</span>
                 <div className="card-main">
@@ -130,7 +146,7 @@ export function CustomersView({
           </div>
         ) : (
           <div className="empty-state compact">
-            <p>暂无客户，请先在左侧新建。</p>
+            <p>{customers.length ? "没有匹配的客户" : "暂无客户，请先在左侧新建。"}</p>
           </div>
         )}
       </section>
