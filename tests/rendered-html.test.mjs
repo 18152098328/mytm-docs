@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 
 async function render() {
@@ -11,6 +11,18 @@ async function render() {
     { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
     { waitUntil() {}, passThroughOnException() {} },
   );
+}
+
+async function readAppSources() {
+  const appDir = new URL("../app/", import.meta.url);
+  const entries = await readdir(appDir, { recursive: true });
+  const files = entries
+    .map((entry) => entry.replaceAll("\\", "/"))
+    .filter((entry) => /\.(tsx|ts|css)$/.test(entry));
+  const sources = await Promise.all(
+    files.map((entry) => readFile(new URL(entry, appDir), "utf8")),
+  );
+  return sources.join("\n");
 }
 
 test("server-renders the MyTM Docs workspace", async () => {
@@ -27,22 +39,31 @@ test("server-renders the MyTM Docs workspace", async () => {
 });
 
 test("ships the independent local-first feature set", async () => {
-  const [page, layout, css, packageJson] = await Promise.all([
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  const [bundle, packageJson] = await Promise.all([
+    readAppSources(),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
-  assert.match(page, /mytm-docs-v1/);
-  assert.match(page, /Quotation/);
-  assert.match(page, /Proforma Invoice/);
-  assert.match(page, /Sales Contract/);
-  assert.match(page, /Commercial Invoice/);
-  assert.match(page, /Packing List/);
-  assert.match(page, /localStorage\.setItem/);
-  assert.match(page, /MyTM-Docs-backup/);
-  assert.match(layout, /MyTM Docs/);
-  assert.match(css, /@media print/);
+  assert.match(bundle, /mytm-docs-v1/);
+  assert.match(bundle, /Quotation/);
+  assert.match(bundle, /Proforma Invoice/);
+  assert.match(bundle, /Sales Contract/);
+  assert.match(bundle, /Commercial Invoice/);
+  assert.match(bundle, /Packing List/);
+  assert.match(bundle, /localStorage\.setItem/);
+  assert.match(bundle, /MyTM-Docs-backup/);
+  assert.match(bundle, /MyTM Docs/);
+  assert.match(bundle, /@media print/);
   assert.match(packageJson, /"name": "mytm-docs"/);
-  assert.doesNotMatch(`${page}\n${layout}\n${css}`, /site-creator-vinext-starter|SkeletonPreview/i);
+  assert.doesNotMatch(bundle, /site-creator-vinext-starter|SkeletonPreview/i);
+});
+
+test("supports editing and deleting every record type", async () => {
+  const bundle = await readAppSources();
+  assert.match(bundle, /parseBackup/);
+  for (const view of ["CustomersView", "ProductsView", "DocumentsView"]) {
+    assert.match(bundle, new RegExp(`function ${view}`));
+  }
+  assert.match(bundle, /onDelete/);
+  assert.match(bundle, /startEdit/);
+  assert.match(bundle, /draftFromDocument/);
 });
