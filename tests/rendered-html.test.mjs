@@ -107,3 +107,13 @@ test("ships the premium UI with light and dark themes", async () => {
   assert.match(bundle, /doc-badge t-/);
   assert.match(bundle, /本月单据/);
 });
+
+test("covers product photos, custom logo, spec column, MOQ and per-carton qty", async () => {
+  const bundle = await readAppSources();
+  assert.match(bundle, /logoImage/);
+  assert.match(bundle, /pcsPerCarton/);
+  assert.match(bundle, /moq/);
+  assert.match(bundle, /SPEC\./);
+  assert.match(bundle, /photo-cell/);
+  assert.match(bundle, /product-thumb/);
+});

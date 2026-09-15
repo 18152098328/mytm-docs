@@ -46,6 +46,7 @@ export function DocumentsView({
   const savedDoc = draft.id ? store.documents.find((x) => x.id === draft.id) : undefined;
   const isConfirmed = savedDoc?.status === "Confirmed";
   const isPacking = draft.type === "Packing List";
+  const isCI = draft.type === "Commercial Invoice";
 
   const filteredDocs = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -80,9 +81,8 @@ export function DocumentsView({
           ? {
               ...line,
               productId,
-              description: product
-                ? product.name + (product.specification ? " · " + product.specification : "")
-                : "",
+              description: product ? product.name : "",
+              spec: product?.specification || "",
               hsCode: product?.hsCode || "",
               unit: product?.unit || "pcs",
               unitPrice: product?.price || 0,
@@ -95,7 +95,18 @@ export function DocumentsView({
   function updateLine(lineId: string, field: keyof LineItem, value: string | number) {
     setDraft((d) => ({
       ...d,
-      lines: d.lines.map((line) => (line.id === lineId ? { ...line, [field]: value } : line)),
+      lines: d.lines.map((line) => {
+        if (line.id !== lineId) return line;
+        const next = { ...line, [field]: value };
+        if (
+          (field === "cartons" || field === "pcsPerCarton") &&
+          Number(next.cartons) > 0 &&
+          Number(next.pcsPerCarton) > 0
+        ) {
+          next.quantity = Number(next.cartons) * Number(next.pcsPerCarton);
+        }
+        return next;
+      }),
     }));
   }
 
@@ -231,6 +242,16 @@ export function DocumentsView({
               />
             </label>
           </div>
+          {draft.type === "Quotation" && (
+            <label>
+              MOQ 最小起订量
+              <input
+                value={draft.moq}
+                onChange={(e) => update("moq", e.target.value)}
+                placeholder="e.g. 500 pcs per model"
+              />
+            </label>
+          )}
           {isPacking && (
             <label>
               唛头（Shipping Marks）
@@ -275,6 +296,10 @@ export function DocumentsView({
                       <input value={line.unit} onChange={(e) => updateLine(line.id, "unit", e.target.value)} />
                     </label>
                     <label>
+                      每箱数量
+                      {numberField(line, "pcsPerCarton", "1")}
+                    </label>
+                    <label>
                       箱数
                       {numberField(line, "cartons", "1")}
                     </label>
@@ -299,7 +324,7 @@ export function DocumentsView({
               <div className="line-head">
                 <span>商品</span>
                 <span>描述</span>
-                <span>HS Code</span>
+                <span>{isCI ? "HS Code" : "规格"}</span>
                 <span>数量</span>
                 <span>单位</span>
                 <span>单价</span>
@@ -320,11 +345,19 @@ export function DocumentsView({
                     onChange={(e) => updateLine(line.id, "description", e.target.value)}
                     placeholder="Description"
                   />
-                  <input
-                    value={line.hsCode}
-                    onChange={(e) => updateLine(line.id, "hsCode", e.target.value)}
-                    placeholder="HS"
-                  />
+                  {isCI ? (
+                    <input
+                      value={line.hsCode}
+                      onChange={(e) => updateLine(line.id, "hsCode", e.target.value)}
+                      placeholder="HS"
+                    />
+                  ) : (
+                    <input
+                      value={line.spec}
+                      onChange={(e) => updateLine(line.id, "spec", e.target.value)}
+                      placeholder="Spec"
+                    />
+                  )}
                   {numberField(line, "quantity", "1")}
                   <input value={line.unit} onChange={(e) => updateLine(line.id, "unit", e.target.value)} />
                   {numberField(line, "unitPrice")}
@@ -473,6 +506,8 @@ export function DocumentsView({
         currency={draft.currency}
         language={draft.language}
         lines={draft.lines}
+        products={store.products}
+        moq={draft.moq}
         paymentTerms={draft.paymentTerms}
         notes={draft.notes}
         total={total}

@@ -2103,3 +2103,54 @@ textarea {
 @page {
   margin: 14mm;
 }
+
+/* ============================================================
+   Product photos, spec column, packing per-carton subline
+   ============================================================ */
+.product-thumb {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.sku-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.doc-table td.photo-cell {
+  padding: 4px 6px;
+  width: 56px;
+}
+
+.photo-cell img {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  display: block;
+}
+
+.spec-cell {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.qty-sub {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.packing-nums {
+  grid-template-columns: repeat(4, 1fr);
+}

@@ -1,5 +1,5 @@
 import { PointerEvent, useRef, useState } from "react";
-import type { Customer, DocLanguage, DocType, LineItem, Seller } from "../lib/types";
+import type { Customer, DocLanguage, DocType, LineItem, Product, Seller } from "../lib/types";
 import { amountInWords, amountInWordsCn, docNames, money, packTotals } from "../lib/data";
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -16,6 +16,8 @@ export function DocumentPreview({
   currency,
   language,
   lines,
+  products,
+  moq,
   paymentTerms,
   notes,
   total,
@@ -33,6 +35,9 @@ export function DocumentPreview({
   currency: string;
   language: DocLanguage;
   lines: LineItem[];
+  /** Product master, used to resolve line photos. */
+  products?: Product[];
+  moq: string;
   paymentTerms: string;
   notes: string;
   total: number;
@@ -49,7 +54,12 @@ export function DocumentPreview({
   const hasTrade = incoterm || portOfLoading || portOfDestination;
   const hasBank = !isPacking && (seller.bankName || seller.bankAccount);
   const cn = language === "bilingual";
-  const showHs = !isPacking && filled.some((x) => x.hsCode.trim());
+  const isCI = type === "Commercial Invoice";
+  const showHs = !isPacking && isCI && filled.some((x) => x.hsCode.trim());
+  const showSpec = !isPacking && !isCI && filled.some((x) => x.spec.trim());
+  const lineImage = (line: LineItem) =>
+    products?.find((p) => p.id === line.productId)?.image || "";
+  const showPhoto = !isPacking && filled.some((x) => lineImage(x));
   /** Bilingual label: "EN 中文" when bilingual output is on. */
   const L = (en: string, zh: string) => (cn ? en + " " + zh : en);
 
@@ -86,7 +96,7 @@ export function DocumentPreview({
     <section className="document-preview" id="print-document">
       <header className="doc-letterhead">
         <div className="doc-brand">
-          <img src="/mytm-logo.png" alt={seller.company} />
+          <img src={seller.logoImage || "/mytm-logo.png"} alt={seller.company} />
           <div>
             <b>{seller.company}</b>
             {seller.address && <span>{seller.address}</span>}
@@ -190,6 +200,9 @@ export function DocumentPreview({
                 <td>{line.description}</td>
                 <td>
                   {fmt(line.quantity, 0)} {line.unit}
+                  {line.pcsPerCarton > 0 && (
+                    <span className="qty-sub">@{fmt(line.pcsPerCarton, 0)}/CTN</span>
+                  )}
                 </td>
                 <td>{fmt(line.cartons, 0)}</td>
                 <td>{fmt(line.netWeight)}</td>
@@ -224,7 +237,9 @@ export function DocumentPreview({
             <thead>
               <tr>
                 <th>#</th>
+                {showPhoto && <th>{L("PHOTO", "图片")}</th>}
                 <th>{L("DESCRIPTION", "品名描述")}</th>
+                {showSpec && <th>{L("SPEC.", "规格型号")}</th>}
                 {showHs && <th>{L("HS CODE", "海关编码")}</th>}
                 <th>{L("QTY", "数量")}</th>
                 <th>{L("UNIT", "单位")}</th>
@@ -236,7 +251,13 @@ export function DocumentPreview({
               {filled.map((line, index) => (
                 <tr key={line.id}>
                   <td>{index + 1}</td>
+                  {showPhoto && (
+                    <td className="photo-cell">
+                      {lineImage(line) && <img src={lineImage(line)} alt="" />}
+                    </td>
+                  )}
                   <td>{line.description}</td>
+                  {showSpec && <td className="spec-cell">{line.spec}</td>}
                   {showHs && <td className="hs-cell">{line.hsCode}</td>}
                   <td>{fmt(line.quantity, 0)}</td>
                   <td>{line.unit}</td>
@@ -246,7 +267,10 @@ export function DocumentPreview({
               ))}
               {!filled.length && (
                 <tr>
-                  <td colSpan={showHs ? 7 : 6} className="preview-placeholder">
+                  <td
+                    colSpan={6 + (showHs ? 1 : 0) + (showSpec ? 1 : 0) + (showPhoto ? 1 : 0)}
+                    className="preview-placeholder"
+                  >
                     添加商品后在此预览
                   </td>
                 </tr>
@@ -273,6 +297,13 @@ export function DocumentPreview({
         <div className="doc-notes">
           <small>{L("SHIPPING MARKS", "唛头")}</small>
           <p>{shippingMarks}</p>
+        </div>
+      )}
+
+      {type === "Quotation" && moq && (
+        <div className="doc-notes">
+          <small>{L("MOQ", "最小起订量")}</small>
+          <p>{moq}</p>
         </div>
       )}
 

@@ -19,26 +19,28 @@ export function SettingsView({
     onSave({ ...form, company: form.company.trim() });
   }
 
-  /** Read the stamp image, downscale it to max 320px, store as PNG data URL. */
-  function loadStamp(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const max = 320;
-        const scale = Math.min(1, max / Math.max(img.width, img.height));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(img.width * scale));
-        canvas.height = Math.max(1, Math.round(img.height * scale));
-        canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
-        setForm((f) => ({ ...f, stampImage: canvas.toDataURL("image/png") }));
+  /** Read an image, downscale it to max 320px, store as PNG data URL in the given field. */
+  function loadImage(field: "stampImage" | "logoImage") {
+    return (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const max = 320;
+          const scale = Math.min(1, max / Math.max(img.width, img.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(img.width * scale));
+          canvas.height = Math.max(1, Math.round(img.height * scale));
+          canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
+          setForm((f) => ({ ...f, [field]: canvas.toDataURL("image/png") }));
+        };
+        img.src = String(reader.result);
       };
-      img.src = String(reader.result);
+      reader.readAsDataURL(file);
     };
-    reader.readAsDataURL(file);
   }
 
   return (
@@ -75,6 +77,32 @@ export function SettingsView({
           税号 / 统一社会信用代码
           <input value={form.taxId} onChange={(e) => set("taxId", e.target.value)} />
         </label>
+
+        <div className="panel-head inner">
+          <div>
+            <p className="eyebrow">COMPANY LOGO</p>
+            <h3>公司 Logo</h3>
+          </div>
+        </div>
+        <p className="section-hint">
+          替换单据信头左上角的标志。建议使用方形、透明背景的 PNG。不上传则使用默认标志。
+        </p>
+        <div className="stamp-row">
+          <div className="stamp-preview">
+            <img src={form.logoImage || "/mytm-logo.png"} alt="公司 Logo" />
+          </div>
+          <div className="stamp-actions">
+            <label className="secondary file-button">
+              上传 Logo
+              <input type="file" accept="image/*" onChange={loadImage("logoImage")} />
+            </label>
+            {form.logoImage && (
+              <button type="button" className="text-button" onClick={() => setForm((f) => ({ ...f, logoImage: "" }))}>
+                恢复默认标志
+              </button>
+            )}
+          </div>
+        </div>
 
         <div className="panel-head inner">
           <div>
@@ -120,7 +148,7 @@ export function SettingsView({
           <div className="stamp-actions">
             <label className="secondary file-button">
               上传印章图片
-              <input type="file" accept="image/*" onChange={loadStamp} />
+              <input type="file" accept="image/*" onChange={loadImage("stampImage")} />
             </label>
             {form.stampImage && (
               <button
@@ -147,7 +175,7 @@ export function SettingsView({
         <div className="letterhead-sample">
           <div className="doc-letterhead">
             <div className="doc-brand">
-              <img src="/mytm-logo.png" alt="" />
+              <img src={form.logoImage || "/mytm-logo.png"} alt="" />
               <div>
                 <b>{form.company || "Company"}</b>
                 <span>{form.address || "地址未填写"}</span>

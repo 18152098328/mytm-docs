@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 import type { Product } from "../lib/types";
 import { money, uid } from "../lib/data";
 import { Icon } from "./icons";
@@ -10,6 +10,7 @@ const emptyForm: Omit<Product, "id"> = {
   price: 0,
   unit: "pcs",
   hsCode: "",
+  image: "",
 };
 
 export function ProductsView({
@@ -53,7 +54,35 @@ export function ProductsView({
       price: item.price,
       unit: item.unit,
       hsCode: item.hsCode,
+      image: item.image,
     });
+  }
+
+  /** Read a product photo, downscale to max 240px, store as JPEG data URL. */
+  function loadImage(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 240;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        }
+        setForm((f) => ({ ...f, image: canvas.toDataURL("image/jpeg", 0.85) }));
+      };
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
   }
 
   function cancelEdit() {
@@ -97,6 +126,22 @@ export function ProductsView({
           规格描述
           <textarea value={form.specification} onChange={(e) => setForm({ ...form, specification: e.target.value })} />
         </label>
+        <div className="stamp-row">
+          <div className="stamp-preview">
+            {form.image ? <img src={form.image} alt="商品图片" /> : <span>暂无图片</span>}
+          </div>
+          <div className="stamp-actions">
+            <label className="secondary file-button">
+              上传商品图片
+              <input type="file" accept="image/*" onChange={loadImage} />
+            </label>
+            {form.image && (
+              <button type="button" className="text-button" onClick={() => setForm((f) => ({ ...f, image: "" }))}>
+                移除图片
+              </button>
+            )}
+          </div>
+        </div>
         <div className="field-row">
           <label>
             参考单价
@@ -131,9 +176,12 @@ export function ProductsView({
             </div>
             {filtered.map((item) => (
               <div className={"table-row" + (editingId === item.id ? " editing" : "")} key={item.id}>
-                <span>
-                  <b>{item.sku || "NO SKU"}</b>
-                  <small>{item.name}</small>
+                <span className="sku-cell">
+                  {item.image && <img className="product-thumb" src={item.image} alt="" />}
+                  <span>
+                    <b>{item.sku || "NO SKU"}</b>
+                    <small>{item.name}</small>
+                  </span>
                 </span>
                 <span className="spec">{item.specification || "—"}</span>
                 <span>

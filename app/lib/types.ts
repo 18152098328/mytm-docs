@@ -29,6 +29,8 @@ export type Seller = {
   bankAccount: string;
   bankSwift: string;
   bankAddress: string;
+  /** Company logo as a data URL for the document letterhead; empty = built-in logo. */
+  logoImage: string;
   /** Company stamp image as a data URL, shown over the signature area. */
   stampImage: string;
   /** Stamp offset in px from its default spot, set by dragging it on the preview. */
@@ -54,18 +56,24 @@ export type Product = {
   price: number;
   unit: string;
   hsCode: string;
+  /** Product photo as a data URL, shown on money documents. */
+  image: string;
 };
 
 export type LineItem = {
   id: string;
   productId: string;
   description: string;
+  /** Model / specification, shown on QT, PI and SC instead of the HS code. */
+  spec: string;
   hsCode: string;
   quantity: number;
   unit: string;
   unitPrice: number;
   /* packing data, used by the Packing List */
   cartons: number;
+  /** Pieces per carton; when set with cartons, quantity is auto-calculated. */
+  pcsPerCarton: number;
   netWeight: number;
   grossWeight: number;
   volume: number;
@@ -81,6 +89,8 @@ export type TradeDocument = {
   status: DocStatus;
   language: DocLanguage;
   items: LineItem[];
+  /** Minimum order quantity, shown on quotations. */
+  moq: string;
   paymentTerms: string;
   notes: string;
   /* trade terms */
@@ -107,6 +117,7 @@ export type Draft = {
   customerId: string;
   currency: string;
   language: DocLanguage;
+  moq: string;
   paymentTerms: string;
   notes: string;
   incoterm: string;
