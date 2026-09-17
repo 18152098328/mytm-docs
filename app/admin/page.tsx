@@ -1,15 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { adminCreateUser, adminListUsers, adminUpdateUser, fetchMe, type AdminUser, type Me } from "../lib/cloud";
+import {
+  adminCreateUser,
+  adminListUsers,
+  adminUpdateUser,
+  cloudLogin,
+  cloudLogout,
+  fetchMe,
+  type AdminUser,
+  type Me,
+} from "../lib/cloud";
 import { Icon } from "../components/icons";
 
 export default function AdminPage() {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   const [users, setUsers] = useState<AdminUser[]>([]);
-  const [error, setError] = useState("");
   const [toast, setToast] = useState("");
+
+  // sign-in form
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [loginError, setLoginError] = useState("");
+
+  // create-account form
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState("user");
@@ -28,7 +44,7 @@ export default function AdminPage() {
       })
       .catch((e) => {
         setMe(null);
-        setError(e instanceof Error ? e.message : "加载失败");
+        setLoginError(e instanceof Error ? e.message : "云端服务不可用");
       });
   }, []);
 
@@ -38,7 +54,33 @@ export default function AdminPage() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  async function act(id: number, patch: { disabled?: boolean; newPassword?: string; role?: string }, msg: string) {
+  async function login(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setLoginError("");
+    try {
+      const m = await cloudLogin(email.trim(), password);
+      setMe(m);
+      setPassword("");
+      if (m.role === "admin") await reload();
+    } catch (e) {
+      setLoginError(e instanceof Error ? e.message : "登录失败");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function logout() {
+    await cloudLogout().catch(() => undefined);
+    setMe(null);
+    setUsers([]);
+  }
+
+  async function act(
+    id: number,
+    patch: { disabled?: boolean; newPassword?: string; role?: string },
+    msg: string,
+  ) {
     try {
       await adminUpdateUser(id, patch);
       await reload();
@@ -90,14 +132,51 @@ export default function AdminPage() {
       {me === undefined && <div className="panel admin-panel">正在加载…</div>}
 
       {me === null && (
-        <div className="panel admin-panel">
-          <p>{error || "请先在工作台的「账号同步」页登录管理员账号，再打开本页。"}</p>
+        <div className="panel admin-panel admin-login">
+          <div className="panel-head">
+            <div>
+              <p className="eyebrow">ADMIN SIGN IN</p>
+              <h3>管理员登录</h3>
+            </div>
+          </div>
+          <form onSubmit={login}>
+            <label>
+              邮箱
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </label>
+            <label>
+              密码
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </label>
+            {loginError && <p className="form-error">{loginError}</p>}
+            <button className="primary wide" disabled={busy}>
+              {busy ? "登录中…" : "登录后台"}
+            </button>
+          </form>
+          <p className="section-hint">仅管理员账号可以进入账户管理后台。</p>
         </div>
       )}
 
       {me && me.role !== "admin" && (
         <div className="panel admin-panel">
-          <p>当前账号（{me.email}）不是管理员，无法访问账户管理后台。</p>
+          <p>当前账号（{me.email}）是普通用户，无权访问账户管理后台。</p>
+          <div className="composer-actions">
+            <button className="secondary" onClick={() => void logout()}>
+              退出登录，更换账号
+            </button>
+          </div>
         </div>
       )}
 
@@ -108,6 +187,12 @@ export default function AdminPage() {
               <p className="eyebrow">NEW ACCOUNT</p>
               <h3>创建账号</h3>
             </div>
+            <span className="admin-me">
+              {me.email} ·
+              <button className="text-button" onClick={() => void logout()}>
+                退出登录
+              </button>
+            </span>
           </div>
           <div className="admin-create-row">
             <input
@@ -131,7 +216,7 @@ export default function AdminPage() {
             </button>
           </div>
           <p className="section-hint">
-            创建后把邮箱与初始密码告知使用者，建议对方登录后自行改密（可在此处重置）。
+            创建后把邮箱与初始密码告知使用者，需要时可在下方随时重置密码。
           </p>
         </div>
       )}
@@ -187,15 +272,30 @@ export default function AdminPage() {
                       {u.disabled ? "启用" : "停用"}
                     </button>
                   )}
-                  {u.id !== me.id && u.role !== "admin" && (
-                    <button className="text-button" onClick={() => void act(u.id, { role: "admin" }, "已设为管理员")}>
-                      设为管理员
-                    </button>
-                  )}
+                  {u.id !== me.id &&
+                    (u.role === "admin" ? (
+                      <button
+                        className="text-button"
+                        onClick={() => void act(u.id, { role: "user" }, "已取消管理员权限")}
+                      >
+                        取消管理员
+                      </button>
+                    ) : (
+                      <button
+                        className="text-button"
+                        onClick={() => void act(u.id, { role: "admin" }, "已设为管理员")}
+                      >
+                        设为管理员
+                      </button>
+                    ))}
                 </span>
               </div>
             ))}
-            {!users.length && <div className="empty-state compact"><p>暂无账号</p></div>}
+            {!users.length && (
+              <div className="empty-state compact">
+                <p>暂无账号</p>
+              </div>
+            )}
           </div>
         </div>
       )}
