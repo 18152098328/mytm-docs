@@ -34,12 +34,6 @@ export const cloudLogin = (email: string, password: string) =>
     body: JSON.stringify({ action: "login", email, password }),
   }).then((r) => r.me);
 
-export const cloudRegister = (email: string, password: string) =>
-  call<{ me: Me }>("/api/auth/", {
-    method: "POST",
-    body: JSON.stringify({ action: "register", email, password }),
-  }).then((r) => r.me);
-
 export const cloudLogout = () =>
   call<{ ok: boolean }>("/api/auth/", {
     method: "POST",
@@ -56,6 +50,12 @@ export const putCloudStore = (store: Store) =>
   });
 
 export const adminListUsers = () => call<{ users: AdminUser[] }>("/api/admin/").then((r) => r.users);
+
+export const adminCreateUser = (email: string, password: string, role: string) =>
+  call<{ ok: boolean }>("/api/admin/", {
+    method: "POST",
+    body: JSON.stringify({ email, password, role }),
+  });
 
 export const adminUpdateUser = (
   id: number,

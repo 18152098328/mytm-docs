@@ -27,6 +27,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
+    if (req.method === "POST") {
+      const body = (req.body ?? {}) as { email?: string; password?: string; role?: string };
+      const email = String(body.email || "").trim().toLowerCase();
+      const password = String(body.password || "");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new HttpError(400, "邮箱格式不正确");
+      if (password.length < 6) throw new HttpError(400, "初始密码至少 6 位");
+      const existing = (await sql`SELECT id FROM users WHERE email = ${email}`) as { id: number }[];
+      if (existing.length) throw new HttpError(409, "该邮箱已存在");
+      const role = body.role === "admin" ? "admin" : "user";
+      await sql`INSERT INTO users (email, password_hash, role) VALUES (${email}, ${hashPassword(password)}, ${role})`;
+      send(res, 200, { ok: true });
+      return;
+    }
+
     if (req.method === "PATCH") {
       const body = (req.body ?? {}) as {
         id?: number;

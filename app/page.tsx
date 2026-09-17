@@ -26,7 +26,6 @@ import {
 import {
   cloudLogin,
   cloudLogout,
-  cloudRegister,
   fetchMe,
   getCloudStore,
   putCloudStore,
@@ -40,6 +39,7 @@ import { ProductsView } from "./components/ProductsView";
 import { DocumentsView } from "./components/DocumentsView";
 import { SettingsView } from "./components/SettingsView";
 import { AccountView, type CloudStatus } from "./components/AccountView";
+import { LoginGate } from "./components/LoginGate";
 import { BackupView } from "./components/BackupView";
 
 export default function Home() {
@@ -51,6 +51,9 @@ export default function Home() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [me, setMe] = useState<Me | null>(null);
   const [cloudStatus, setCloudStatus] = useState<CloudStatus>("off");
+  // "checking" until the session probe returns; "login" requires sign-in;
+  // "open" shows the workspace (signed in, or local fallback when no API).
+  const [gate, setGate] = useState<"checking" | "login" | "open">("checking");
 
   const setDraft = (updater: (d: Draft) => Draft) => setDraftState(updater);
 
@@ -73,11 +76,16 @@ export default function Home() {
       /* default light */
     }
     setLoaded(true);
-    // Restore a cloud session if one exists; pull the cloud workspace silently.
+    // Session probe: signed in -> open and pull cloud data; signed out ->
+    // login gate; API unreachable (local dev / unconfigured) -> local mode.
     fetchMe()
       .then(async (m) => {
-        if (!m) return;
+        if (!m) {
+          setGate("login");
+          return;
+        }
         setMe(m);
+        setGate("open");
         try {
           const remote = await getCloudStore();
           if (remote.data) {
@@ -90,7 +98,7 @@ export default function Home() {
         }
       })
       .catch(() => {
-        /* cloud service unavailable; stay local */
+        setGate("open");
       });
   }, []);
 
@@ -126,43 +134,37 @@ export default function Home() {
 
   /* ---------- cloud account ---------- */
 
-  async function afterAuth(user: Me) {
+  async function loginCloud(email: string, password: string) {
+    const user = await cloudLogin(email, password);
     setMe(user);
+    setGate("open");
     const remote = await getCloudStore().catch(() => null);
     if (remote?.data) {
-      const useCloud = window.confirm(
-        "云端账号里已有数据。\n确定 = 加载云端数据（覆盖本设备）\n取消 = 以本设备数据覆盖云端",
-      );
-      if (useCloud) {
-        const parsed = parseBackup(JSON.stringify(remote.data));
-        if (parsed) setStore(parsed);
-        setCloudStatus("synced");
-        setToast("已加载云端数据");
-        return;
-      }
+      const parsed = parseBackup(JSON.stringify(remote.data));
+      if (parsed) setStore(parsed);
+      setCloudStatus("synced");
+      setToast("已加载云端数据");
+    } else {
+      await putCloudStore(store).catch(() => undefined);
+      setCloudStatus("synced");
+      setToast("云同步已开启");
     }
-    await putCloudStore(store).catch(() => undefined);
-    setCloudStatus("synced");
-    setToast("云同步已开启");
-  }
-
-  async function loginCloud(email: string, password: string) {
-    await afterAuth(await cloudLogin(email, password));
-  }
-
-  async function registerCloud(email: string, password: string) {
-    const user = await cloudRegister(email, password);
-    setMe(user);
-    await putCloudStore(store).catch(() => undefined);
-    setCloudStatus("synced");
-    setToast(user.role === "admin" ? "注册成功，你是管理员" : "注册成功，云同步已开启");
   }
 
   async function logoutCloud() {
+    if (!window.confirm("退出登录将清除本设备上的缓存数据（数据已保存在云端），确定退出？")) return;
     await cloudLogout().catch(() => undefined);
     setMe(null);
     setCloudStatus("off");
-    setToast("已退出登录，数据保留在本设备");
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+    setStore(starter);
+    setDraftState(makeDraft("Quotation", []));
+    setView("dashboard");
+    setGate("login");
   }
 
   async function syncNow() {
@@ -337,6 +339,18 @@ export default function Home() {
     event.target.value = "";
   }
 
+  if (gate === "checking") {
+    return (
+      <div className="login-gate">
+        <div className="login-card login-loading">正在进入工作台…</div>
+      </div>
+    );
+  }
+
+  if (gate === "login") {
+    return <LoginGate onLogin={loginCloud} />;
+  }
+
   return (
     <main className="app-shell">
       <Sidebar view={view} onNavigate={setView} />
@@ -400,8 +414,6 @@ export default function Home() {
           <AccountView
             me={me}
             cloudStatus={cloudStatus}
-            onLogin={loginCloud}
-            onRegister={registerCloud}
             onLogout={logoutCloud}
             onSyncNow={syncNow}
           />

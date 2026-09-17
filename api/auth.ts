@@ -56,10 +56,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (action === "register") {
       if (password.length < 6) throw new HttpError(400, "密码至少 6 位");
-      const existing = (await sql`SELECT id FROM users WHERE email = ${email}`) as { id: number }[];
-      if (existing.length) throw new HttpError(409, "该邮箱已注册，请直接登录");
       const countRows = (await sql`SELECT count(*)::int AS n FROM users`) as { n: number }[];
-      const role = countRows[0].n === 0 ? "admin" : "user";
+      // Public registration is closed once the first (admin) account exists;
+      // accounts are created and assigned by the administrator.
+      if (countRows[0].n > 0) throw new HttpError(403, "注册已关闭，账号由管理员统一分配");
+      const role = "admin";
       const rows = (await sql`
         INSERT INTO users (email, password_hash, role)
         VALUES (${email}, ${hashPassword(password)}, ${role})

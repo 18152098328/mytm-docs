@@ -31,10 +31,10 @@ test("server-renders the MyTM Docs workspace", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
   assert.match(html, /<title>MyTM Docs \| 本地外贸单据工作台<\/title>/i);
-  assert.match(html, /客户资料/);
-  assert.match(html, /商品资料/);
-  assert.match(html, /外贸单据/);
-  assert.match(html, /18152098328/);
+  // The workspace is gated: the server-rendered first paint is the loading
+  // shell of the login gate, not the sidebar.
+  assert.match(html, /login-gate/);
+  assert.match(html, /正在进入工作台/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
 });
 
@@ -125,4 +125,12 @@ test("covers cloud accounts, sync, and the admin console", async () => {
   assert.match(bundle, /\/api\/auth/);
   assert.match(bundle, /\/api\/admin/);
   assert.match(bundle, /admin-table/);
+});
+
+test("gates the workspace behind assigned-account login", async () => {
+  const bundle = await readAppSources();
+  assert.match(bundle, /LoginGate/);
+  assert.match(bundle, /adminCreateUser/);
+  assert.match(bundle, /login-gate/);
+  assert.match(bundle, /账号由管理员统一创建与分配/);
 });
