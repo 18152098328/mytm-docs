@@ -26,42 +26,42 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
-export const fetchMe = () => call<{ me: Me | null }>("/api/auth").then((r) => r.me);
+export const fetchMe = () => call<{ me: Me | null }>("/api/auth/").then((r) => r.me);
 
 export const cloudLogin = (email: string, password: string) =>
-  call<{ me: Me }>("/api/auth", {
+  call<{ me: Me }>("/api/auth/", {
     method: "POST",
     body: JSON.stringify({ action: "login", email, password }),
   }).then((r) => r.me);
 
 export const cloudRegister = (email: string, password: string) =>
-  call<{ me: Me }>("/api/auth", {
+  call<{ me: Me }>("/api/auth/", {
     method: "POST",
     body: JSON.stringify({ action: "register", email, password }),
   }).then((r) => r.me);
 
 export const cloudLogout = () =>
-  call<{ ok: boolean }>("/api/auth", {
+  call<{ ok: boolean }>("/api/auth/", {
     method: "POST",
     body: JSON.stringify({ action: "logout" }),
   });
 
 export const getCloudStore = () =>
-  call<{ data: unknown; updatedAt?: string }>("/api/store");
+  call<{ data: unknown; updatedAt?: string }>("/api/store/");
 
 export const putCloudStore = (store: Store) =>
-  call<{ updatedAt: string }>("/api/store", {
+  call<{ updatedAt: string }>("/api/store/", {
     method: "PUT",
     body: JSON.stringify({ data: store }),
   });
 
-export const adminListUsers = () => call<{ users: AdminUser[] }>("/api/admin").then((r) => r.users);
+export const adminListUsers = () => call<{ users: AdminUser[] }>("/api/admin/").then((r) => r.users);
 
 export const adminUpdateUser = (
   id: number,
   patch: { disabled?: boolean; newPassword?: string; role?: string },
 ) =>
-  call<{ ok: boolean }>("/api/admin", {
+  call<{ ok: boolean }>("/api/admin/", {
     method: "PATCH",
     body: JSON.stringify({ id, ...patch }),
   });
