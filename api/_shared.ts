@@ -14,7 +14,11 @@ export class HttpError extends Error {
 export type Sql = ReturnType<typeof neon>;
 
 export function db(): Sql {
-  const url = process.env.DATABASE_URL;
+  const url =
+    process.env.DATABASE_URL ||
+    process.env.STORAGE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.DATABASE_POSTGRES_URL;
   if (!url) throw new HttpError(503, "云端服务未配置：请在 Vercel 项目中连接 Neon Postgres 数据库");
   return neon(url);
 }
