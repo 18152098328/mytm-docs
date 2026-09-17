@@ -7,6 +7,7 @@ const nav: { id: View; label: string; icon: IconName }[] = [
   { id: "products", label: "商品资料", icon: "products" },
   { id: "documents", label: "外贸单据", icon: "documents" },
   { id: "settings", label: "公司设置", icon: "settings" },
+  { id: "account", label: "账号同步", icon: "cloud" },
   { id: "backup", label: "备份恢复", icon: "backup" },
 ];
 
@@ -16,6 +17,7 @@ export const viewLabels: Record<View, string> = {
   products: "商品资料",
   documents: "外贸单据",
   settings: "公司设置",
+  account: "账号同步",
   backup: "备份恢复",
 };
 

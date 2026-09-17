@@ -20,7 +20,8 @@ export type IconName =
   | "search"
   | "convert"
   | "sun"
-  | "moon";
+  | "moon"
+  | "cloud";
 
 const paths: Record<IconName, JSX.Element> = {
   dashboard: (
@@ -136,6 +137,12 @@ const paths: Record<IconName, JSX.Element> = {
     </>
   ),
   moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />,
+  cloud: (
+    <>
+      <path d="M17.5 19a4.5 4.5 0 0 0 .42-8.98 6 6 0 0 0-11.7 1.58A4 4 0 0 0 7 19Z" />
+      <path d="m9.5 14.5 2 2 3.5-3.5" />
+    </>
+  ),
 };
 
 export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {

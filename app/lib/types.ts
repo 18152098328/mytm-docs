@@ -4,6 +4,7 @@ export type View =
   | "products"
   | "documents"
   | "settings"
+  | "account"
   | "backup";
 
 export type DocType =

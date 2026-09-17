@@ -2154,3 +2154,118 @@ textarea {
 .packing-nums {
   grid-template-columns: repeat(4, 1fr);
 }
+
+/* ============================================================
+   Cloud account & admin console
+   ============================================================ */
+.account-status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.account-avatar {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, var(--navy), var(--navy-2));
+  color: #fff;
+  font-weight: 720;
+  font-size: 18px;
+}
+
+.account-status b {
+  display: block;
+  font-size: 14px;
+}
+
+.account-status small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.form-error {
+  margin: -4px 0 12px;
+  color: var(--red);
+  font-size: 12.5px;
+}
+
+.account-admin-link {
+  text-decoration: none;
+}
+
+.admin-shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+}
+
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.admin-topbar h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.admin-back {
+  text-decoration: none;
+}
+
+.admin-panel {
+  padding: 22px;
+}
+
+.admin-table {
+  display: flex;
+  flex-direction: column;
+  overflow-x: auto;
+}
+
+.admin-head,
+.admin-row {
+  display: grid;
+  grid-template-columns: 1.6fr 0.7fr 0.7fr 0.9fr 1fr 1.4fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 8px;
+  min-width: 720px;
+}
+
+.admin-head {
+  font-size: 11px;
+  font-weight: 680;
+  letter-spacing: 0.8px;
+  color: var(--faint);
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-row {
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-row:last-child {
+  border-bottom: 0;
+}
+
+.admin-email {
+  font-weight: 620;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-dim {
+  color: var(--muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+}

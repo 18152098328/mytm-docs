@@ -23,6 +23,15 @@ import {
   today,
   uid,
 } from "./lib/data";
+import {
+  cloudLogin,
+  cloudLogout,
+  cloudRegister,
+  fetchMe,
+  getCloudStore,
+  putCloudStore,
+  type Me,
+} from "./lib/cloud";
 import { Icon } from "./components/icons";
 import { Sidebar, viewLabels } from "./components/Sidebar";
 import { DashboardView } from "./components/DashboardView";
@@ -30,6 +39,7 @@ import { CustomersView } from "./components/CustomersView";
 import { ProductsView } from "./components/ProductsView";
 import { DocumentsView } from "./components/DocumentsView";
 import { SettingsView } from "./components/SettingsView";
+import { AccountView, type CloudStatus } from "./components/AccountView";
 import { BackupView } from "./components/BackupView";
 
 export default function Home() {
@@ -39,6 +49,8 @@ export default function Home() {
   const [toast, setToast] = useState("");
   const [draft, setDraftState] = useState<Draft>(() => makeDraft("Quotation", []));
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [me, setMe] = useState<Me | null>(null);
+  const [cloudStatus, setCloudStatus] = useState<CloudStatus>("off");
 
   const setDraft = (updater: (d: Draft) => Draft) => setDraftState(updater);
 
@@ -61,6 +73,25 @@ export default function Home() {
       /* default light */
     }
     setLoaded(true);
+    // Restore a cloud session if one exists; pull the cloud workspace silently.
+    fetchMe()
+      .then(async (m) => {
+        if (!m) return;
+        setMe(m);
+        try {
+          const remote = await getCloudStore();
+          if (remote.data) {
+            const parsed = parseBackup(JSON.stringify(remote.data));
+            if (parsed) setStore(parsed);
+          }
+          setCloudStatus("synced");
+        } catch {
+          setCloudStatus("error");
+        }
+      })
+      .catch(() => {
+        /* cloud service unavailable; stay local */
+      });
   }, []);
 
   useEffect(() => {
@@ -77,10 +108,75 @@ export default function Home() {
   }, [store, loaded]);
 
   useEffect(() => {
+    if (!me || !loaded) return;
+    const timer = setTimeout(() => {
+      setCloudStatus("syncing");
+      putCloudStore(store)
+        .then(() => setCloudStatus("synced"))
+        .catch(() => setCloudStatus("error"));
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [store, me, loaded]);
+
+  useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 2400);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  /* ---------- cloud account ---------- */
+
+  async function afterAuth(user: Me) {
+    setMe(user);
+    const remote = await getCloudStore().catch(() => null);
+    if (remote?.data) {
+      const useCloud = window.confirm(
+        "云端账号里已有数据。\n确定 = 加载云端数据（覆盖本设备）\n取消 = 以本设备数据覆盖云端",
+      );
+      if (useCloud) {
+        const parsed = parseBackup(JSON.stringify(remote.data));
+        if (parsed) setStore(parsed);
+        setCloudStatus("synced");
+        setToast("已加载云端数据");
+        return;
+      }
+    }
+    await putCloudStore(store).catch(() => undefined);
+    setCloudStatus("synced");
+    setToast("云同步已开启");
+  }
+
+  async function loginCloud(email: string, password: string) {
+    await afterAuth(await cloudLogin(email, password));
+  }
+
+  async function registerCloud(email: string, password: string) {
+    const user = await cloudRegister(email, password);
+    setMe(user);
+    await putCloudStore(store).catch(() => undefined);
+    setCloudStatus("synced");
+    setToast(user.role === "admin" ? "注册成功，你是管理员" : "注册成功，云同步已开启");
+  }
+
+  async function logoutCloud() {
+    await cloudLogout().catch(() => undefined);
+    setMe(null);
+    setCloudStatus("off");
+    setToast("已退出登录，数据保留在本设备");
+  }
+
+  async function syncNow() {
+    if (!me) return;
+    setCloudStatus("syncing");
+    try {
+      await putCloudStore(store);
+      setCloudStatus("synced");
+      setToast("已同步到云端");
+    } catch (e) {
+      setCloudStatus("error");
+      setToast(e instanceof Error ? e.message : "同步失败");
+    }
+  }
 
   /* ---------- seller ---------- */
 
@@ -299,6 +395,17 @@ export default function Home() {
         )}
 
         {view === "settings" && <SettingsView seller={store.seller} onSave={saveSeller} />}
+
+        {view === "account" && (
+          <AccountView
+            me={me}
+            cloudStatus={cloudStatus}
+            onLogin={loginCloud}
+            onRegister={registerCloud}
+            onLogout={logoutCloud}
+            onSyncNow={syncNow}
+          />
+        )}
 
         {view === "backup" && <BackupView onExport={exportBackup} onImport={importBackup} />}
       </section>

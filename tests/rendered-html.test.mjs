@@ -117,3 +117,12 @@ test("covers product photos, custom logo, spec column, MOQ and per-carton qty", 
   assert.match(bundle, /photo-cell/);
   assert.match(bundle, /product-thumb/);
 });
+
+test("covers cloud accounts, sync, and the admin console", async () => {
+  const bundle = await readAppSources();
+  assert.match(bundle, /AccountView/);
+  assert.match(bundle, /putCloudStore/);
+  assert.match(bundle, /\/api\/auth/);
+  assert.match(bundle, /\/api\/admin/);
+  assert.match(bundle, /admin-table/);
+});
