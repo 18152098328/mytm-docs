@@ -50,19 +50,19 @@ export default function AdminPage() {
 
   async function createAccount() {
     if (!newEmail.trim() || newPassword.length < 6) {
-      setToast("\u8bf7\u586b\u5199\u90ae\u7bb1\u548c\u81f3\u5c11 6 \u4f4d\u7684\u521d\u59cb\u5bc6\u7801");
+      setToast("请填写邮箱和至少 6 位的初始密码");
       return;
     }
     setCreating(true);
     try {
       await adminCreateUser(newEmail.trim(), newPassword, newRole);
       await reload();
-      setToast("\u8d26\u53f7\u5df2\u521b\u5efa\uff0c\u8bf7\u628a\u90ae\u7bb1\u548c\u521d\u59cb\u5bc6\u7801\u544a\u77e5\u4f7f\u7528\u8005");
+      setToast("账号已创建，请把邮箱和初始密码告知使用者");
       setNewEmail("");
       setNewPassword("");
       setNewRole("user");
     } catch (e) {
-      setToast(e instanceof Error ? e.message : "\u521b\u5efa\u5931\u8d25");
+      setToast(e instanceof Error ? e.message : "创建失败");
     } finally {
       setCreating(false);
     }
@@ -106,32 +106,32 @@ export default function AdminPage() {
           <div className="panel-head">
             <div>
               <p className="eyebrow">NEW ACCOUNT</p>
-              <h3>\u521b\u5efa\u8d26\u53f7</h3>
+              <h3>创建账号</h3>
             </div>
           </div>
           <div className="admin-create-row">
             <input
               type="email"
-              placeholder="\u90ae\u7bb1\uff0c\u5982 staff@example.com"
+              placeholder="邮箱，如 staff@example.com"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
             />
             <input
               type="text"
-              placeholder="\u521d\u59cb\u5bc6\u7801\uff08\u81f3\u5c11 6 \u4f4d\uff09"
+              placeholder="初始密码（至少 6 位）"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
             <select value={newRole} onChange={(e) => setNewRole(e.target.value)}>
-              <option value="user">\u666e\u901a\u7528\u6237</option>
-              <option value="admin">\u7ba1\u7406\u5458</option>
+              <option value="user">普通用户</option>
+              <option value="admin">管理员</option>
             </select>
             <button className="primary" disabled={creating} onClick={() => void createAccount()}>
-              {creating ? "\u521b\u5efa\u4e2d\u2026" : "\u521b\u5efa\u8d26\u53f7"}
+              {creating ? "创建中…" : "创建账号"}
             </button>
           </div>
           <p className="section-hint">
-            \u521b\u5efa\u540e\u628a\u90ae\u7bb1\u4e0e\u521d\u59cb\u5bc6\u7801\u544a\u77e5\u4f7f\u7528\u8005\uff0c\u5efa\u8bae\u5bf9\u65b9\u767b\u5f55\u540e\u81ea\u884c\u6539\u5bc6\uff08\u53ef\u5728\u6b64\u5904\u91cd\u7f6e\uff09\u3002
+            创建后把邮箱与初始密码告知使用者，建议对方登录后自行改密（可在此处重置）。
           </p>
         </div>
       )}
